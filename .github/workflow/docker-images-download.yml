@@ -17,6 +17,9 @@ jobs:
     steps:
     - name: Checkout source (optional, if needed for your context)
       uses: actions/checkout@v4
+    
+    - name: ACTIONS_ALLOW_UNSECURE_COMMANDS
+      run: echo 'ACTIONS_ALLOW_UNSECURE_COMMANDS=true' >> $GITHUB_ENV
 
     - name: Install Aliyun CLI
       uses: jerray/setup-aliyun-cli-action@v1.0.0
