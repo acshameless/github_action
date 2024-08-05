@@ -1,0 +1,46 @@
+# .github/workflows/docker_push_to_aliyun.yml
+name: Push Docker Image to Aliyun
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: 'Docker image name'
+        required: true
+      image_tag:
+        description: 'Docker image tag'
+        required: true
+
+jobs:
+  push-to-aliyun:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source (optional, if needed for your context)
+      uses: actions/checkout@v4
+
+    - name: Install Aliyun CLI
+      uses: jerray/setup-aliyun-cli-action@v1.0.0
+      with:
+        aliyun-cli-version: '3.0.165'
+        mode: AK
+        access-key-id: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+        access-key-secret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+        region: ${{ secrets.ALIYUN_REGION }}
+
+    - name: Login to Aliyun Docker Registry
+      run: |
+        echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin
+        echo "/opt/hostedtoolcache/aliyun/3.0.165/x64" >> $GITHUB_PATH
+        
+    # - name: Create Docker Repository
+    #   run: |
+    #     aliyun cr CreateRepo --RegionId cn-hangzhou --RepoNamespace achub --RepoName ${{ github.event.inputs.image_name }} --RepoType public
+
+    - name: Pull Docker Image
+      run: docker pull ${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
+
+    - name: Tag Docker Image for Aliyun
+      run: docker tag ${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }} registry.cn-hangzhou.aliyuncs.com/achub/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
+
+    - name: Push Docker Image to Aliyun
+      run: docker push registry.cn-hangzhou.aliyuncs.com/achub/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
